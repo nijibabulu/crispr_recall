@@ -1,10 +1,7 @@
-bin_PROGRAMS=east katool trecall
-east_SOURCES=recursion.c traceback.c seq.c statistics.c east.c opts.c output.c matrix.c
-katool_SOURCES=katool.c statistics.c
-trecall_SOURCES=trecall.c recursion.c traceback.c seq.c statistics.c opts.c output.c matrix.c ambig.c
-
-dist_pkgdata_DATA=BLOSUM
+bin_PROGRAMS=crispr_recall
+crispr_recall_SOURCES=crispr_recall.c recursion.c traceback.c seq.c statistics.c opts.c output.c matrix.c ambig.c
 
 include_HEADERS=east_types.h
+#dist_pkgdata_DATA=BLOSUM
 
 AM_CFLAGS=-DDATADIR=\"$(pkgdatadir)\"

@@ -89,4 +89,92 @@ create_disambig_map()
 }
 
 
+void
+poly_info_delete(poly_info_t **polyp)
+{
+  poly_info_t *poly = *polyp;
+  free(poly->base1);
+  free(poly->base2);
+  free(poly->auc1);
+  free(poly->auc2);
+  free(poly);
+  *polyp = NULL;
+}
+
+poly_info_t *
+poly_info_parse(FILE *f)
+{
+  int i;
+  char buffer[4096], *s,tmp_base;
+  double tmp_auc;
+  poly_info_t *poly;
+
+  poly = malloc(sizeof(poly_info_t));
+
+  for(poly->len = -1; fgets(buffer,4096,f); poly->len++);
+  rewind(f);
+
+  poly->base1 = malloc(sizeof(char)*poly->len);
+  poly->base2 = malloc(sizeof(char)*poly->len);
+  poly->auc1 = malloc(sizeof(double)*poly->len);
+  poly->auc2 = malloc(sizeof(double)*poly->len);
+
+  fgets(buffer,4096,f);
+  strcpy(poly->name,strtok(buffer," "));
+
+  for(i = 0; i < poly->len; i++) {
+    fgets(buffer, 4096,f);
+
+    s = strtok(buffer," ");
+    poly->base1[i] = s[0];
+    strtok(NULL, " "); /* position */
+    poly->auc1[i] = strtof(strtok(NULL, " "), NULL);
+    strtok(NULL, " "); /* ratio */
+    s = strtok(NULL," ");
+    poly->base2[i] = s[0];
+    s = strtok(NULL, " "); /* position */
+    s = strtok(NULL, " ");
+    poly->auc2[i] = strtof(s, NULL);
+
+    if(poly->auc1[i] < poly->auc2[i]) {
+      tmp_base = poly->base2[i];
+      poly->base2[i] = poly->base1[i];
+      poly->base1[i] = tmp_base;
+
+      tmp_auc = poly->auc2[i];
+      poly->auc2[i] = poly->auc1[i];
+      poly->auc1[i] = tmp_auc;
+    }
+    /*fprintf(stderr, "%c %f %c %f\n", poly->base1[i], poly->auc1[i], poly->base2[i], poly->auc2[i]);*/
+  }
+
+  return poly;
+}
+
+seq_t *
+poly_generate_ambig_seq(poly_info_t* poly, smat_t *ambig_map, double threshold) 
+{
+  int i;
+  char ambig_c;
+  double ratio;
+  seq_t *ambig = seq_alloc(poly->name,poly->len);
+  
+  for(i = 0; i < poly->len; i++) {
+    ratio = poly->auc2[i] / poly->auc1[i];
+    if(threshold < ratio) {
+      ambig_c = ambig_map->s[poly->base1[i]][poly->base2[i]];
+      if(ambig_c == AMBIG_UNDEF) {
+        fprintf(stderr, "Ambiguity code is undefined for: %c %c\n", 
+            poly->base1[i], poly->base2[i]);
+        exit(1);
+      }
+      ambig->seq[i] = ambig_c;
+    }
+    else
+      ambig->seq[i] = poly->base1[i];
+  }
+
+  return ambig;
+}
+
 

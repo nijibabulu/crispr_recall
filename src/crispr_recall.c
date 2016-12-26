@@ -86,7 +86,7 @@ main(int argc, char *argv[])
   FASTAFILE *wt;
   extern char *optarg;
   extern int optind;
-  int longindex,i;
+  int longindex,i,wt_dir;
   pos_t pos;
   alphabet_t *a;
   seq_t *ambig_seq,*recall_seq,*wt_fseq,*wt_rseq,*wt_seq;
@@ -135,22 +135,24 @@ main(int argc, char *argv[])
     rmat_recurse(rmat, smat, Q, R, 0);
     rtb = sw_tb(rmat, smat, MINUS_STRAND, PLUS_STRAND, wt_rseq->len, ambig_seq->len);
 
-    if(ftb->s > rtb->s) { tb = ftb; wt_seq = wt_fseq; }
-    else                { tb = rtb; wt_seq = wt_rseq; }
+    if(ftb->s > rtb->s) { tb = ftb; wt_seq = wt_fseq; wt_dir = PLUS_STRAND; }
+    else                { tb = rtb; wt_seq = wt_rseq; wt_dir = MINUS_STRAND; }
 
     recall_seq = recall_from_tb(tb, wt_seq, ambig_seq, disambig_map);
 
     rmat->s = wt_seq;
     rmat->q = recall_seq;
     rmat_recurse(rmat, smat, Q, R, 0);
-    recall_tb = sw_tb(rmat, smat, PLUS_STRAND, PLUS_STRAND, wt_seq->len, recall_seq->len);
+    recall_tb = sw_tb(rmat, smat, wt_dir, PLUS_STRAND, wt_seq->len, recall_seq->len);
 
     tb_print(stdout, recall_tb);
-    mutant_info = mutant_info_from_tb(recall_tb);
+    mutant_info = mutant_info_from_tb(recall_tb, wt_seq, ambig_seq);
     for(i = 0; i < mutant_info->len; i++) {
         cur_gap = &mutant_info->gaps[i];
         printf( "%c %d %d\n", cur_gap->type, cur_gap->start, cur_gap->length);
     }
+    printf("aligned mms: %d %d %0.2f %.2f\n", mutant_info->aligned_mismatches,
+            mutant_info->aligned_match_pct,mutant_info->wt_coverage_pct);
     break;
   }
 

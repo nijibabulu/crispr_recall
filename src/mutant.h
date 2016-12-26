@@ -18,7 +18,10 @@ typedef struct _mutant_info_t {
   gap_t *gaps;
   size_t wt_gap_length;
   size_t recall_gap_length;
+  int aligned_mismatches, aligned_matches, aligned_bases;
+  float aligned_match_pct;
+  float wt_coverage_pct;
 } mutant_info_t;
 
-mutant_info_t * mutant_info_from_tb(tb_t *tb);
+mutant_info_t * mutant_info_from_tb(tb_t *tb, seq_t *wt, seq_t *ambig);
 #endif /* ANALYZE_H */

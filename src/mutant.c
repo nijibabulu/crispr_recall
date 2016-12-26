@@ -1,7 +1,7 @@
 #include "mutant.h"
 
 mutant_info_t *
-mutant_info_from_tb(tb_t *tb) 
+mutant_info_from_tb(tb_t *tb, seq_t *wt, seq_t *ambig) 
 {
   mutant_info_t *mutant_info;
   tb_node_t *cur;
@@ -20,6 +20,15 @@ mutant_info_from_tb(tb_t *tb)
   for(cur = tb->first, cur_gap = mutant_info->gaps; 
       cur != NULL && cur->next != NULL;
       cur = cur->next) {
+
+    if(cur->sbjct != '-' && cur->query != '-') {
+        if(cur->match == '|')
+            mutant_info->aligned_matches ++;
+        else
+            mutant_info->aligned_mismatches ++;
+        mutant_info->aligned_bases ++;
+    }
+        
     if( (cur->sbjct != '-' && cur->next->sbjct == '-') ||
         (cur->query != '-' && cur->next->query == '-')) {
       if(cur->next->sbjct == '-')  cur_gap->type = GAP_WT; 
@@ -36,6 +45,12 @@ mutant_info_from_tb(tb_t *tb)
       }
     }
   }
+
+  mutant_info->aligned_match_pct = 100. *
+      ((float) mutant_info->aligned_matches)/mutant_info->aligned_bases;
+  mutant_info->wt_coverage_pct = 100.* 
+      ((float) mutant_info->aligned_bases)/wt->len;
+
   return mutant_info;
 }
 

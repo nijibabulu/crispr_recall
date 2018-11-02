@@ -104,7 +104,7 @@ seq_alloc(const char *name, size_t len)
   seq_t *seq = malloc(sizeof(seq_t));
 
   if(name != NULL) {
-    seq->name = malloc(strlen(name)*sizeof(char));
+    seq->name = malloc(strlen(name)*(sizeof(char)+1));
     strcpy(seq->name,name);
   }
   else

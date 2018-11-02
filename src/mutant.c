@@ -10,7 +10,10 @@ mutant_info_from_tb(tb_t *tb, seq_t *wt, seq_t *ambig)
   int in_wt_gap,in_recall_gap;
 
   mutant_info = malloc(sizeof(mutant_info_t));
-  for(cur = tb->first; cur != NULL && cur->next != NULL; cur = cur->next) {
+  
+  for(cur = tb->first, mutant_info->len = 0;
+          cur != NULL && cur->next != NULL;
+          cur = cur->next) {
     if( (cur->sbjct != '-' && cur->next->sbjct == '-') ||
         (cur->query != '-' && cur->next->query == '-'))
       mutant_info->len ++;

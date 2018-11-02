@@ -41,7 +41,8 @@ recall_from_tb(tb_t *tb, seq_t *wt, seq_t *ambig, smat_t *disambig_map)
   /* this is Aaron's implementation: if it's unaligned then it's unsequenced,
    * so output an X for the resolved sequence. Maybe they will only want the 
    * sequenced portion, though. */
-  for(i = 0; i < tb->first->j-1; i++) 
+  //printf("%d\n", tb->first->i);
+  for(i = 0; i < tb->first->j-2; i++) 
     disambig->seq[i] = 'X';
   
   for(cur = tb->first; cur != NULL; cur = cur->next, i++) {
@@ -56,6 +57,8 @@ recall_from_tb(tb_t *tb, seq_t *wt, seq_t *ambig, smat_t *disambig_map)
 
   for(; i < ambig->len; i++) 
     disambig->seq[i] = 'X';
+
+  disambig->len = i;
 
   return disambig;
 }
@@ -83,6 +86,7 @@ process_trecall_opt(char c)
 int 
 main(int argc, char *argv[])
 {
+  FILE *polyf;
   FASTAFILE *wt;
   extern char *optarg;
   extern int optind;
@@ -115,7 +119,12 @@ main(int argc, char *argv[])
   ambig_map = create_ambig_map();
   disambig_map = create_disambig_map();
 
-  poly = poly_info_parse(fopen(argv[1],"r"));
+  polyf = fopen(argv[1],"r");
+  if(polyf == NULL) {
+      fprintf(stderr, "Could not open %s for reading.\n", argv[1]);
+      exit(1);
+  }
+  poly = poly_info_parse(polyf);
   ambig_seq = poly_generate_ambig_seq(poly,ambig_map,threshold);
 
   a = find_alphabet("IUPAC");
@@ -138,12 +147,15 @@ main(int argc, char *argv[])
     if(ftb->s > rtb->s) { tb = ftb; wt_seq = wt_fseq; wt_dir = PLUS_STRAND; }
     else                { tb = rtb; wt_seq = wt_rseq; wt_dir = MINUS_STRAND; }
 
+
     recall_seq = recall_from_tb(tb, wt_seq, ambig_seq, disambig_map);
 
-    rmat->s = wt_seq;
-    rmat->q = recall_seq;
+    rmat_delete(&rmat);
+    rmat = rmat_new(wt_seq,recall_seq);
     rmat_recurse(rmat, smat, Q, R, 0);
     recall_tb = sw_tb(rmat, smat, wt_dir, PLUS_STRAND, wt_seq->len, recall_seq->len);
+    /*rmat_recurse(rmat, smat, Q, R, 1);
+    recall_tb = nw_tb(rmat, smat, wt_dir, PLUS_STRAND);*/
 
     tb_print(stdout, recall_tb);
     mutant_info = mutant_info_from_tb(recall_tb, wt_seq, ambig_seq);

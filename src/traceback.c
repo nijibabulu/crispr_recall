@@ -85,6 +85,7 @@ sw_tb(rmat_t *rmat, smat_t *smat, int sbjct_strand, int query_strand, long Z, lo
       case 5: 
         in_gap = 1; 
         i--; j--;
+         /* XXX: uninitialized values? */
         if(rmat->gp[i][j] == 2 || rmat->gp[i][j] == 4) q = rmat->q->seq[j-1];
         else                                           s = rmat->s->seq[i-1];
         break;
@@ -169,7 +170,7 @@ nw_tb(rmat_t *rmat, smat_t *smat, int sbjct_strand, int query_strand)
       break;
     }
 
-    if(s == q) match = '|';
+    if(toupper(s) == toupper(q)) match = '|';
     else if(smat->s[(int)s][(int)q] > 0) match = '+';
     else match = ' ';
 
@@ -209,7 +210,7 @@ tb_print(FILE *out, tb_t *tb)
   head = tb->first;
   for(head = tb->first; head != NULL; head=cur) {
     /* Query line */
-    fprintf(out, "Query:   % 5d ", head->j);
+    fprintf(out, "Query: % 7d ", head->j);
     for(prev=cur=head, i=0; i<60 && cur!=NULL; prev=cur, cur=cur->next,i++) 
       fputc(cur->query, out);
     fprintf(out, " %d\n", prev->j);
@@ -221,7 +222,7 @@ tb_print(FILE *out, tb_t *tb)
     fputc('\n',out);
 
     /* Sbjct line */
-    fprintf(out, "Sbjct:   % 5d ", head->i);
+    fprintf(out, "Sbjct: % 7d ", head->i);
     for(prev=cur=head, i=0; i<60 && cur!=NULL; prev=cur, cur=cur->next, i++) 
       fputc(cur->sbjct, out);
     fprintf(out, " %d\n\n", prev->i);
